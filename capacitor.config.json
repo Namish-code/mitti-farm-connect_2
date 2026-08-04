@@ -1,5 +1,6 @@
 {
   "appId": "com.mitti.app",
-  "appName": "MittiApp",
-  "webDir": "www"
+  "appName": "Mitti",
+  "webDir": ".",
+  "bundledWebRuntime": false
 }

@@ -2,160 +2,845 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Mitti App</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Mitti - Smart Agriculture Platform</title>
     
-    <!-- Google Fonts -->
+    <!-- Google Fonts (Bricolage Grotesque & DM Sans) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
     
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     
-    <!-- Chart.js for Data Viz -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- Top App Bar -->
+    <!-- Top App Bar (Matching Reference Photo) -->
     <header class="app-header">
-        <div class="header-left">
-            <i data-lucide="leaf" class="logo-icon"></i>
-            <h1>Mitti</h1>
+        <div class="brand-area">
+            <div class="logo-circle">
+                <i data-lucide="leaf" style="width: 22px; height: 22px;"></i>
+            </div>
+            <span class="brand-name" id="appTitleText">Mitti</span>
         </div>
-        <div class="header-right">
-            <button class="icon-btn cart-btn" onclick="openCart()">
-                <i data-lucide="shopping-cart"></i>
-                <span class="badge" id="cartBadge" style="display: none;">0</span>
+        <div class="header-actions">
+            <button class="header-action-btn" style="background: #E3F0E8; color: #2E6B48; border-color: #2E6B48;" onclick="openVendorConsultModal()">
+                <i data-lucide="phone-call"></i>
+                <span>Consult</span>
             </button>
-            <button class="icon-btn"><i data-lucide="user"></i></button>
+            <button class="header-action-btn" onclick="openLangModal()">
+                <i data-lucide="languages"></i>
+                <span id="currentLangText">EN</span>
+            </button>
+            <button class="header-action-btn" onclick="openCart()">
+                <i data-lucide="shopping-cart"></i>
+                <span>Cart</span>
+                <span class="badge" id="headerCartBadge" style="display:none; background:#2E6B48; color:white; font-size:10px; padding:2px 6px; border-radius:10px; margin-left:4px;">0</span>
+            </button>
+            <button class="header-action-btn" onclick="openLocationModal()">
+                <i data-lucide="map-pin"></i>
+                <span id="userLocText">Varanasi</span>
+            </button>
+            <button class="header-action-btn" style="color: #DC2626; border-color: #FCA5A5;" onclick="MITTI_ONBOARDING.logout()" title="Exit / Switch Account">
+                <i data-lucide="log-out"></i>
+                <span>Exit</span>
+            </button>
         </div>
     </header>
 
-    <!-- Main Content Area -->
+    <!-- Main Application View Area -->
     <main class="app-content">
-        
-        <!-- View: Data Viz (Dashboard) -->
-        <div id="view-dashboard" class="view active">
-            <section class="section-header">
-                <h2>Farm Overview</h2>
-                <p>Track your yields and soil health</p>
-            </section>
+
+        <!-- ==================== MARKET MODULE VIEW ==================== -->
+        <div id="view-market" class="view active">
             
-            <div class="card glass-card">
-                <h3>Crop Yield History (Quintals)</h3>
-                <div class="chart-container">
-                    <canvas id="yieldChart"></canvas>
+            <!-- Hero Produce Banner (Matching Photo) -->
+            <div class="hero-banner">
+                <img src="https://images.unsplash.com/photo-1610348725531-843dff563e2c?auto=format&fit=crop&w=1000&q=80" alt="Fresh Harvest Produce">
+                <div class="hero-overlay"></div>
+            </div>
+
+            <!-- Mandi Header Section (Matching Photo) -->
+            <section class="mandi-section-header">
+                <div class="updated-tag" id="updatedTodayText">UPDATED TODAY</div>
+                <h1 class="mandi-main-title">Mandi <span>rates</span></h1>
+            </section>
+
+            <!-- Search & Voice Controls Bar -->
+            <div class="controls-bar">
+                <div class="search-box">
+                    <i data-lucide="search" style="color: var(--text-muted); width: 18px;"></i>
+                    <input type="text" id="searchInput" placeholder="Search crop, mandi, or buyer...">
+                </div>
+                <button class="mic-btn" onclick="MITTI_MARKET.startVoiceSearch()" title="Voice Search">
+                    <i data-lucide="mic" style="width: 20px;"></i>
+                </button>
+            </div>
+
+            <!-- Pill Filter Chips Bar (Matching Photo) -->
+            <div class="filter-pills-bar">
+                <button class="sort-icon-btn" title="Sort Options">⇅</button>
+                <button class="pill-chip active" id="filter-movers" onclick="MITTI_MARKET.setFilter('movers')">Movers</button>
+                <button class="pill-chip" id="filter-price" onclick="MITTI_MARKET.setFilter('price')">Price</button>
+                <button class="pill-chip" id="filter-az" onclick="MITTI_MARKET.setFilter('az')">A-Z</button>
+            </div>
+
+            <!-- Crop Category Chips Bar -->
+            <div class="cat-chips-bar" id="categoryChips">
+                <!-- Injected via JS -->
+            </div>
+
+            <!-- Sub-Tab Navigation Bar -->
+            <div class="market-subtabs">
+                <button class="market-subtab active" id="subtab-rates" onclick="MITTI_MARKET.switchSubTab('rates')">Mandi Rates</button>
+                <button class="market-subtab" id="subtab-buyers" onclick="MITTI_MARKET.switchSubTab('buyers')">Buyers</button>
+                <button class="market-subtab" id="subtab-sell" onclick="MITTI_MARKET.switchSubTab('sell')">+ Sell Produce</button>
+                <button class="market-subtab" id="subtab-listings" onclick="MITTI_MARKET.switchSubTab('listings')">My Listings</button>
+                <button class="market-subtab" id="subtab-offers" onclick="MITTI_MARKET.switchSubTab('offers')">
+                    Offers <span class="badge" id="offersCountBadge" style="display:none; background:#ef4444; color:white; font-size:10px; padding:2px 5px; border-radius:10px;">0</span>
+                </button>
+                <button class="market-subtab" id="subtab-history" onclick="MITTI_MARKET.switchSubTab('history')">History</button>
+                <button class="market-subtab" id="subtab-analytics" onclick="MITTI_MARKET.switchSubTab('analytics')">Analytics</button>
+            </div>
+
+            <!-- Sub-View 1: Mandi Rates List (Matching Photo Layout) -->
+            <div id="subview-rates" class="market-subview">
+                <!-- Weather Alert Banner (Mock) -->
+                <div class="glass-card" style="background: #fffbebf0; border-color: #fef08a; display: flex; gap: 0.75rem; align-items: center;">
+                    <i data-lucide="cloud-rain" style="color: #d97706; width: 28px; height: 28px; flex-shrink: 0;"></i>
+                    <div>
+                        <h5 style="color: #92400e; font-size: 0.9rem;">Weather Alert: Early Rain Forecast</h5>
+                        <p style="font-size: 0.8rem; color: #b45309;">Rain expected tomorrow in Varanasi region. Harvest early!</p>
+                    </div>
+                </div>
+
+                <!-- Mandi Rates List -->
+                <div id="mandiRatesList">
+                    <!-- Injected via JS -->
                 </div>
             </div>
-            
-            <div class="card glass-card">
-                <h3>Soil NPK Levels</h3>
-                <div class="chart-container">
-                    <canvas id="soilChart"></canvas>
+
+            <!-- Sub-View 2: Buyers Directory & Comparison -->
+            <div id="subview-buyers" class="market-subview" style="display: none;">
+                <div class="glass-card" style="padding: 0.75rem; margin-bottom: 1rem; display: flex; gap: 0.5rem; overflow-x: auto;">
+                    <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px; white-space: nowrap;">
+                        <input type="checkbox" id="filterVerified" onchange="MITTI_MARKET.renderBuyers()"> Verified
+                    </label>
+                    <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px; white-space: nowrap;">
+                        <input type="checkbox" id="filterPickup" onchange="MITTI_MARKET.renderBuyers()"> Pickup Available
+                    </label>
+                    <label style="font-size: 0.8rem; display: flex; align-items: center; gap: 4px; white-space: nowrap;">
+                        <input type="checkbox" id="filterOrganic" onchange="MITTI_MARKET.renderBuyers()"> Organic Only
+                    </label>
                 </div>
+                <div id="buyersList">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+
+            <!-- Sub-View 3: Sell Produce Large Form -->
+            <div id="subview-sell" class="market-subview" style="display: none;">
+                <div class="glass-card">
+                    <h3 style="margin-bottom: 1rem; color: var(--primary);">🌾 List Produce For Sale</h3>
+                    <form id="sellCropForm">
+                        <div class="form-group">
+                            <label>Crop Name</label>
+                            <select class="form-control" id="formCropName" required onchange="MITTI_MARKET.onFormCropSelect()">
+                                <option value="">Select Crop...</option>
+                                <option value="Wheat">Wheat</option>
+                                <option value="Rice (Paddy)">Rice (Paddy)</option>
+                                <option value="Tomato">Tomato</option>
+                                <option value="Onion">Onion</option>
+                                <option value="Cotton (Kapas)">Cotton (Kapas)</option>
+                                <option value="Potato">Potato</option>
+                                <option value="Maize">Maize</option>
+                                <option value="Groundnut">Groundnut</option>
+                                <option value="Mustard">Mustard</option>
+                                <option value="Sugarcane">Sugarcane</option>
+                                <option value="Soybean">Soybean</option>
+                                <option value="Turmeric">Turmeric</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Quantity & Unit</label>
+                            <div class="unit-input-group">
+                                <input type="number" class="form-control" id="formQuantity" placeholder="e.g. 50" required min="1">
+                                <select class="form-control" id="formUnit" style="width: 120px;" onchange="MITTI_MARKET.onFormCropSelect()">
+                                    <option value="quintal">Quintal</option>
+                                    <option value="kg">kg</option>
+                                    <option value="ton">Ton</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Expected Selling Price (₹/unit)</label>
+                            <input type="number" class="form-control" id="formExpectedPrice" placeholder="Select crop above for auto-suggestion...">
+                            
+                            <!-- Auto-suggest Price Banner (Matching Reference Screenshot) -->
+                            <div id="priceSuggestionBanner" class="price-suggest-banner" style="display: none;">
+                                <div class="price-suggest-header">
+                                    <i data-lucide="sparkles" style="width: 18px; height: 18px; color: #2E6B48;"></i>
+                                    <span><strong>Auto-Suggested Rate:</strong> <span id="suggestedPriceVal">₹0</span>/<span id="suggestedPriceUnit">quintal</span></span>
+                                </div>
+                                <p class="price-suggest-desc" id="suggestedPriceDetail">Based on real-time Mandi market rates</p>
+                                <div class="price-preset-chips" id="pricePresetChips"></div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Quality Grade</label>
+                            <select class="form-control" id="formQuality">
+                                <option value="Excellent">Excellent</option>
+                                <option value="Good" selected>Good</option>
+                                <option value="Average">Average</option>
+                                <option value="Organic Certified">Organic Certified</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Location</label>
+                            <input type="text" class="form-control" id="formLocation" value="Varanasi, UP">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Produce Photos (Max 3)</label>
+                            <div class="img-upload-zone" onclick="document.getElementById('formFileInput').click()">
+                                <i data-lucide="camera" style="width: 28px; height: 28px; color: var(--primary);"></i>
+                                <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">Tap to upload photos</p>
+                            </div>
+                            <input type="file" id="formFileInput" accept="image/*" multiple style="display: none;" onchange="MITTI_MARKET.handleImageUpload(event)">
+                            <div class="img-preview-container" id="imagePreviewContainer"></div>
+                        </div>
+
+                        <div class="form-group" style="background: #fef2f2; padding: 0.75rem; border-radius: 8px; border: 1px solid #fecaca;">
+                            <label style="color: #991b1b; display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                                <input type="checkbox" id="formEmergencyCheck"> ⚡ Emergency Sell (High priority listing)
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Description</label>
+                            <textarea class="form-control" id="formDesc" rows="2" placeholder="Harvest date, packaging details..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn-submit-large">List Harvest Now</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Sub-View 4: My Listings -->
+            <div id="subview-listings" class="market-subview" style="display: none;">
+                <div id="myListingsList">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+
+            <!-- Sub-View 5: Offers Received -->
+            <div id="subview-offers" class="market-subview" style="display: none;">
+                <div id="offersList">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+
+            <!-- Sub-View 6: Transaction History -->
+            <div id="subview-history" class="market-subview" style="display: none;">
+                <div id="transactionsList">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+
+            <!-- Sub-View 7: Analytics -->
+            <div id="subview-analytics" class="market-subview" style="display: none;">
+                <div class="glass-card">
+                    <h3>💰 Earnings Summary</h3>
+                    <div style="font-size: 1.8rem; font-weight: 800; color: var(--primary); margin: 0.5rem 0;">₹4,91,500</div>
+                    <p style="font-size: 0.85rem; color: var(--text-muted);">Total 4 transactions completed</p>
+                </div>
+
+                <div class="glass-card">
+                    <h4>Crop Revenue Distribution</h4>
+                    <div style="height: 200px; position: relative;">
+                        <canvas id="cropPieChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="glass-card">
+                    <h4>Monthly Income (₹)</h4>
+                    <div style="height: 200px; position: relative;">
+                        <canvas id="monthlyBarChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ==================== ANALYTICS VIEW ==================== -->
+        <div id="view-analytics" class="view" style="display: none;">
+            <div class="glass-card">
+                <h2>Farm Analytics</h2>
+                <p>Track your yields and revenue metrics</p>
             </div>
         </div>
 
-        <!-- View: Vendor Simulation (Market) -->
-        <div id="view-market" class="view" style="display: none;">
-            <section class="section-header">
-                <h2>Live Market</h2>
-                <p>Simulated buyers bidding on your crops</p>
-            </section>
-            
-            <div class="market-ticker glass-card">
-                <i data-lucide="trending-up" style="color: var(--accent);"></i>
-                <span id="tickerText">Wheat demand is high today! Prices up 2%</span>
-            </div>
-
-            <div class="vendor-list" id="vendorList">
-                <!-- Vendors injected via JS -->
-            </div>
-        </div>
-
-        <!-- View: E-Commerce (Shop) -->
+        <!-- ==================== SHOP VIEW ==================== -->
         <div id="view-shop" class="view" style="display: none;">
-            <section class="section-header">
+            <div class="glass-card">
                 <h2>Agri Supply Store</h2>
-                <p>Fertilizers, Seeds, and Equipment</p>
-            </section>
-            
-            <!-- Categories -->
-            <div class="shop-categories">
-                <button class="cat-chip active">All</button>
-                <button class="cat-chip">Fertilizers</button>
-                <button class="cat-chip">Seeds</button>
-                <button class="cat-chip">Tools</button>
-            </div>
-
-            <div class="products-grid" id="productsGrid">
-                <!-- Products injected via JS -->
+                <p>Fertilizers, Seeds, Tools</p>
             </div>
         </div>
 
-        <!-- View: Gov Schemes -->
+        <!-- ==================== SCHEMES VIEW ==================== -->
         <div id="view-schemes" class="view" style="display: none;">
-            <section class="section-header">
-                <h2>Gov Schemes</h2>
-                <p>Financial aid and subsidies</p>
-            </section>
-            
-            <div class="search-bar glass-card">
-                <i data-lucide="search"></i>
-                <input type="text" placeholder="Search schemes...">
+            <div class="glass-card">
+                <h2>Government Schemes</h2>
+                <p>PM-KISAN, Fasal Bima Yojana</p>
             </div>
+        </div>
 
-            <div class="schemes-list" id="schemesList">
-                <!-- Schemes injected via JS -->
-            </div>
+        <!-- ==================== VENDOR VIEW ==================== -->
+        <div id="view-vendor" class="view" style="display: none;">
+            <!-- Rendered dynamically by js/vendor.js -->
         </div>
 
     </main>
 
-    <!-- Bottom Navigation Bar -->
-    <nav class="bottom-nav">
-        <button class="nav-item active" onclick="switchView('dashboard', this)">
-            <i data-lucide="line-chart"></i>
-            <span>Analytics</span>
-        </button>
-        <button class="nav-item" onclick="switchView('market', this)">
-            <i data-lucide="store"></i>
-            <span>Market</span>
-        </button>
-        <button class="nav-item" onclick="switchView('shop', this)">
-            <i data-lucide="shopping-bag"></i>
-            <span>Shop</span>
-        </button>
-        <button class="nav-item" onclick="switchView('schemes', this)">
-            <i data-lucide="landmark"></i>
-            <span>Schemes</span>
-        </button>
-    </nav>
 
-    <!-- Cart Modal (Hidden by default) -->
-    <div id="cartModal" class="modal-overlay" style="display: none;">
-        <div class="modal-content glass-card">
+    <!-- Floating Compare Bar -->
+    <div class="floating-compare-bar" id="compareFloatingBar" style="display: none;">
+        <span id="compareCountText" style="font-weight: 700;">Compare (0/3 Buyers)</span>
+        <button class="btn-primary-sm" onclick="MITTI_MARKET.openCompareModal()">View Matrix</button>
+    </div>
+
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- Price Detail Modal -->
+    <div id="priceDetailModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
             <div class="modal-header">
-                <h2>Your Cart</h2>
-                <button class="icon-btn" onclick="closeCart()"><i data-lucide="x"></i></button>
-            </div>
-            <div class="cart-items" id="cartItems">
-                <p class="empty-msg">Your cart is empty.</p>
-            </div>
-            <div class="cart-footer">
-                <div class="cart-total">
-                    <span>Total:</span>
-                    <span id="cartTotalAmt">₹0</span>
+                <div>
+                    <h3 id="modalCropName">Crop Detail</h3>
+                    <p id="modalMandiName" style="font-size: 0.8rem; color: var(--text-muted);"></p>
                 </div>
-                <button class="btn-primary" onclick="checkout()">Checkout</button>
+                <button class="icon-btn" onclick="MITTI_MARKET.closePriceDetailModal()">✕</button>
+            </div>
+            
+            <div style="height: 180px; margin-bottom: 1rem; position: relative;">
+                <canvas id="priceTrendChart"></canvas>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+                <div style="background: var(--bg-main); padding: 0.75rem; border-radius: 8px;">
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Current Mandi Price</span>
+                    <h4 id="modalCurrentPrice" style="color: var(--primary);">₹0</h4>
+                </div>
+                <div style="background: var(--bg-main); padding: 0.75rem; border-radius: 8px;">
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Government MSP</span>
+                    <h4 id="modalMspPrice" style="color: var(--brown-accent);">₹0</h4>
+                </div>
+                <div style="background: var(--bg-main); padding: 0.75rem; border-radius: 8px;">
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Highest Buyer Rate</span>
+                    <h4 id="modalHighPrice">₹0</h4>
+                </div>
+                <div style="background: var(--bg-main); padding: 0.75rem; border-radius: 8px;">
+                    <span style="font-size: 0.75rem; color: var(--text-muted);">Lowest Buyer Rate</span>
+                    <h4 id="modalLowPrice">₹0</h4>
+                </div>
+            </div>
+
+            <button class="btn-submit-large" onclick="MITTI_MARKET.closePriceDetailModal(); MITTI_MARKET.switchSubTab('sell');">
+                Sell Harvest at this Price
+            </button>
+        </div>
+    </div>
+
+    <!-- Buyer Profile Modal -->
+    <div id="buyerProfileModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="profileTitle">Buyer Profile</h3>
+                <button class="icon-btn" onclick="MITTI_MARKET.closeBuyerProfileModal()">✕</button>
+            </div>
+            <p id="profileOwner" style="font-weight: 600; color: var(--primary);"></p>
+            <p id="profilePhone" style="font-size: 0.9rem; margin-top: 4px;"></p>
+            <p id="profileLocation" style="font-size: 0.85rem; color: var(--text-muted);"></p>
+            <p id="profileRating" style="margin-top: 6px; font-weight: 600;"></p>
+            <p id="profileHours" style="font-size: 0.8rem; color: var(--text-muted);"></p>
+
+            <div style="margin: 1rem 0;">
+                <h4 style="font-size: 0.9rem; margin-bottom: 0.5rem;">Current Produce Requirements:</h4>
+                <div id="profileDemands"></div>
+            </div>
+
+            <button class="btn-submit-large" onclick="alert('Calling Buyer...');">
+                📞 Call Buyer Now
+            </button>
+        </div>
+    </div>
+
+    <!-- Compare Matrix Modal -->
+    <div id="compareModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Side-by-Side Buyer Comparison</h3>
+                <button class="icon-btn" onclick="MITTI_MARKET.closeCompareModal()">✕</button>
+            </div>
+            <div id="compareModalContent" style="overflow-x: auto;"></div>
+        </div>
+    </div>
+
+    <!-- Counter Offer Modal -->
+    <div id="counterModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Negotiate Price (Counter Offer)</h3>
+                <button class="icon-btn" onclick="MITTI_MARKET.closeCounterModal()">✕</button>
+            </div>
+            <input type="hidden" id="counterOfferId">
+            <p style="font-size: 0.9rem;">Current Buyer Offer: <strong id="counterCurrentPrice" style="color: var(--primary);">₹0</strong></p>
+            
+            <div class="form-group" style="margin-top: 1rem;">
+                <label>Your Counter Offer Price (₹/unit)</label>
+                <input type="number" class="form-control" id="counterNewPrice" placeholder="Enter your target price">
+            </div>
+
+            <button class="btn-submit-large" onclick="MITTI_MARKET.submitCounterOffer()">Submit Counter Price</button>
+        </div>
+    </div>
+
+    <!-- QR Code Modal -->
+    <div id="qrModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card" style="text-align: center;">
+            <div class="modal-header">
+                <h3 id="qrModalTitle">QR Code</h3>
+                <button class="icon-btn" onclick="MITTI_MARKET.closeQrModal()">✕</button>
+            </div>
+            <div id="qrModalContent"></div>
+        </div>
+    </div>
+
+    <!-- Receipt Modal -->
+    <div id="receiptModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Transaction Receipt</h3>
+                <button class="icon-btn" onclick="MITTI_MARKET.closeReceiptModal()">✕</button>
+            </div>
+            <div id="receiptModalContent"></div>
+            <button class="btn-submit-large" style="margin-top: 1rem;" onclick="MITTI_MARKET.printReceipt()">🖨 Print / Save PDF</button>
+        </div>
+    </div>
+
+    <!-- Language Selector Modal -->
+    <div id="langModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>Select Language / भाषा चुनें</h3>
+                <button class="icon-btn" onclick="closeLangModal()">✕</button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <button class="btn-submit-large" style="background: var(--bg-main); color: var(--text-dark); border: 1px solid var(--border-light);" onclick="setLang('EN')">English</button>
+                <button class="btn-submit-large" style="background: var(--bg-main); color: var(--text-dark); border: 1px solid var(--border-light);" onclick="setLang('HI')">हिन्दी (Hindi)</button>
+                <button class="btn-submit-large" style="background: var(--bg-main); color: var(--text-dark); border: 1px solid var(--border-light);" onclick="setLang('TA')">தமிழ் (Tamil)</button>
             </div>
         </div>
     </div>
 
+    <!-- Shopping Cart Modal -->
+    <div id="cartModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card" style="max-width: 480px;">
+            <div class="modal-header">
+                <h3>🛒 Krishi Store Cart</h3>
+                <button class="icon-btn" onclick="closeCartModal()">✕</button>
+            </div>
+            <div id="cartModalContent" style="margin: 1rem 0; max-height: 280px; overflow-y: auto;">
+                <!-- Injected via JS -->
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 1.1rem; font-weight: 800; color: #2C5E3B; margin-bottom: 1rem;">
+                <span>Total Amount:</span>
+                <span id="cartTotalPrice">₹0</span>
+            </div>
+            <button class="btn-submit-large" onclick="checkoutCart()">Place Order to Vendor</button>
+        </div>
+    </div>
+
+    <!-- Location Selector Modal -->
+    <div id="locationModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>📍 Select Mandi / District</h3>
+                <button class="icon-btn" onclick="closeLocationModal()">✕</button>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;">
+                <button class="btn-submit-large" style="background: var(--bg-main); color: var(--text-dark); border: 1px solid var(--border-light);" onclick="selectLocation('Varanasi')">📍 Varanasi (Uttar Pradesh)</button>
+                <button class="btn-submit-large" style="background: var(--bg-main); color: var(--text-dark); border: 1px solid var(--border-light);" onclick="selectLocation('Agra')">📍 Agra (Uttar Pradesh)</button>
+                <button class="btn-submit-large" style="background: var(--bg-main); color: var(--text-dark); border: 1px solid var(--border-light);" onclick="selectLocation('Rajkot')">📍 Rajkot (Gujarat)</button>
+                <button class="btn-submit-large" style="background: var(--bg-main); color: var(--text-dark); border: 1px solid var(--border-light);" onclick="selectLocation('Khanna')">📍 Khanna (Punjab)</button>
+                <button class="btn-submit-large" style="background: var(--bg-main); color: var(--text-dark); border: 1px solid var(--border-light);" onclick="selectLocation('Karnal')">📍 Karnal (Haryana)</button>
+                <button class="btn-submit-large" style="background: var(--bg-main); color: var(--text-dark); border: 1px solid var(--border-light);" onclick="selectLocation('Akola')">📍 Akola (Maharashtra)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Vendor Consult Modal (Matching User Screenshot) -->
+    <div id="vendorConsultModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card" style="max-width: 480px; max-height: 85vh; display: flex; flex-direction: column;">
+            <div class="modal-header" style="border-bottom: 1px solid #E6E1D8; pb: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: #E3F0E8; display: grid; place-items: center; color: #2E6B48;">
+                        <i data-lucide="message-square" style="width: 22px; height: 22px;"></i>
+                    </div>
+                    <div>
+                        <h3 style="font-size: 1.15rem; font-weight: 800; color: #1F2937; margin: 0;">Vendor consult</h3>
+                        <p style="font-size: 0.8rem; color: var(--text-muted); margin: 0;">Simulated live call room</p>
+                    </div>
+                </div>
+                <button class="icon-btn" onclick="closeVendorConsultModal()">✕</button>
+            </div>
+
+            <div style="overflow-y: auto; padding: 12px 0; display: flex; flex-direction: column; gap: 12px;">
+                <!-- Card 1 -->
+                <div class="consult-card">
+                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80" alt="Annapurna Organics" class="consult-avatar">
+                    <div style="flex-grow: 1;">
+                        <h4 style="font-size: 1rem; font-weight: 800; color: #1F2937; margin: 0;">Annapurna Organics</h4>
+                        <p style="font-size: 0.78rem; color: var(--text-muted); margin: 2px 0 6px;">Vermicompost & bio-fertiliser · Mysuru</p>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="consult-action-btn" onclick="startVendorChat('Annapurna Organics', 'Vermicompost & Bio-fertiliser Expert', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80')">💬 Chat</button>
+                            <button class="consult-action-btn primary" onclick="startLiveCall('Annapurna Organics', 'Vermicompost & bio-fertiliser · Mysuru', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80')">📞 Call</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="consult-card">
+                    <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80" alt="Bharat Krishi Seva" class="consult-avatar">
+                    <div style="flex-grow: 1;">
+                        <h4 style="font-size: 1rem; font-weight: 800; color: #1F2937; margin: 0;">Bharat Krishi Seva</h4>
+                        <p style="font-size: 0.78rem; color: var(--text-muted); margin: 2px 0 6px;">Drip irrigation & soil testing · Jaipur</p>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="consult-action-btn" onclick="startVendorChat('Bharat Krishi Seva', 'Drip Irrigation & Soil Specialist', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80')">💬 Chat</button>
+                            <button class="consult-action-btn primary" onclick="startLiveCall('Bharat Krishi Seva', 'Drip irrigation & soil testing · Jaipur', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80')">📞 Call</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="consult-card">
+                    <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80" alt="Deshmukh Agri Mart" class="consult-avatar">
+                    <div style="flex-grow: 1;">
+                        <h4 style="font-size: 1rem; font-weight: 800; color: #1F2937; margin: 0;">Deshmukh Agri Mart</h4>
+                        <p style="font-size: 0.78rem; color: var(--text-muted); margin: 2px 0 6px;">Cotton crop protection · Akola</p>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="consult-action-btn" onclick="startVendorChat('Deshmukh Agri Mart', 'Crop Protection Specialist', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80')">💬 Chat</button>
+                            <button class="consult-action-btn primary" onclick="startLiveCall('Deshmukh Agri Mart', 'Cotton crop protection · Akola, Maharashtra', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80')">📞 Call</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="consult-card">
+                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80" alt="Kisan Sahayak Depot" class="consult-avatar">
+                    <div style="flex-grow: 1;">
+                        <h4 style="font-size: 1rem; font-weight: 800; color: #1F2937; margin: 0;">Kisan Sahayak Depot</h4>
+                        <p style="font-size: 0.78rem; color: var(--text-muted); margin: 2px 0 6px;">Pesticides & sprayers · Ludhiana</p>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="consult-action-btn" onclick="startVendorChat('Kisan Sahayak Depot', 'Pesticides & Machinery Expert', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80')">💬 Chat</button>
+                            <button class="consult-action-btn primary" onclick="startLiveCall('Kisan Sahayak Depot', 'Pesticides & sprayers · Ludhiana, Punjab', 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=150&q=80')">📞 Call</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 5 -->
+                <div class="consult-card">
+                    <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80" alt="Patel Agro Traders" class="consult-avatar">
+                    <div style="flex-grow: 1;">
+                        <h4 style="font-size: 1rem; font-weight: 800; color: #1F2937; margin: 0;">Patel Agro Traders</h4>
+                        <p style="font-size: 0.78rem; color: var(--text-muted); margin: 2px 0 6px;">NPK blends & micronutrients · Anand</p>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="consult-action-btn" onclick="startVendorChat('Patel Agro Traders', 'NPK & Fertilizer Specialist', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80')">💬 Chat</button>
+                            <button class="consult-action-btn primary" onclick="startLiveCall('Patel Agro Traders', 'NPK blends & micronutrients · Anand', 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=150&q=80')">📞 Call</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card 6 -->
+                <div class="consult-card">
+                    <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80" alt="Ramesh Krishi Kendra" class="consult-avatar">
+                    <div style="flex-grow: 1;">
+                        <h4 style="font-size: 1rem; font-weight: 800; color: #1F2937; margin: 0;">Ramesh Krishi Kendra</h4>
+                        <p style="font-size: 0.78rem; color: var(--text-muted); margin: 2px 0 6px;">Urea & DAP wholesale · Nashik</p>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="consult-action-btn" onclick="startVendorChat('Ramesh Krishi Kendra', 'Urea & DAP Wholesale Specialist', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80')">💬 Chat</button>
+                            <button class="consult-action-btn primary" onclick="startLiveCall('Ramesh Krishi Kendra', 'Urea & DAP wholesale · Nashik, Maharashtra', 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80')">📞 Call</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Vendor Chat Room Overlay -->
+    <div id="vendorChatModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card" style="max-width: 480px; height: 85vh; display: flex; flex-direction: column; padding: 0; overflow: hidden;">
+            <!-- Chat Room Header -->
+            <div style="background: #2E6B48; color: white; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <img id="chatAvatar" src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=150&q=80" style="width: 42px; height: 42px; border-radius: 50%; object-fit: cover; border: 2px solid white;">
+                    <div>
+                        <h4 id="chatVendorName" style="font-size: 1rem; font-weight: 800; margin: 0;">Ramesh Krishi Kendra</h4>
+                        <span id="chatVendorTitle" style="font-size: 0.75rem; color: #D1D5DB;">🟢 Online · Expert Verified</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <button style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 12px; border-radius: 12px; font-weight: 700; font-size: 0.8rem; cursor: pointer;" onclick="switchToCallFromChat()">📞 Call</button>
+                    <button style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 12px; border-radius: 12px; font-weight: 700; font-size: 0.8rem; cursor: pointer;" onclick="closeVendorChat()">✕</button>
+                </div>
+            </div>
+
+            <!-- Scrollable Chat Messages Container -->
+            <div id="chatMessagesList" style="flex-grow: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; background: #F8F6F0;">
+                <!-- Messages populated dynamically -->
+            </div>
+
+            <!-- Message Input Bar -->
+            <div style="padding: 12px 16px; background: #FFFFFF; border-top: 1px solid #E6E1D8; display: flex; gap: 8px; align-items: center;">
+                <input type="text" id="chatInput" placeholder="Type message to expert..." style="flex-grow: 1; padding: 10px 14px; border-radius: 20px; border: 1px solid #E6E1D8; outline: none; font-size: 0.9rem;" onkeypress="if(event.key==='Enter') sendVendorChatMessage()">
+                <button style="background: #2E6B48; color: white; border: none; padding: 10px 16px; border-radius: 20px; font-weight: 800; cursor: pointer;" onclick="sendVendorChatMessage()">Send ➔</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Call Overlay Room (Matching User Screenshot Bottom Bar) -->
+    <div id="liveCallOverlay" class="modal-overlay" style="display: none; background: rgba(0,0,0,0.85); flex-direction: column; justify-content: space-between; padding: 24px;">
+        <!-- Top Call Status Bar -->
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; max-width: 480px; margin: 0 auto; color: white;">
+            <div style="display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.15); backdrop-filter: blur(10px); padding: 6px 14px; border-radius: 20px;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: #22C55E; display: inline-block;"></span>
+                <span id="callTimerText" style="font-size: 0.85rem; font-weight: 700;">00:01</span>
+            </div>
+            <button style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 6px 12px; border-radius: 14px; font-weight: 700; cursor: pointer;" onclick="endLiveCall()">✕ Close</button>
+        </div>
+
+        <!-- Center Vendor Call Profile & Waveform -->
+        <div style="display: flex; flex-direction: column; align-items: center; text-align: center; color: white; gap: 16px;">
+            <div style="position: relative;">
+                <img id="callAvatar" src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80" style="width: 110px; height: 110px; border-radius: 50%; border: 4px solid #2E6B48; object-fit: cover; box-shadow: 0 8px 24px rgba(0,0,0,0.4);">
+                <span style="position: absolute; bottom: 4px; right: 4px; background: #22C55E; border: 2px solid white; width: 16px; height: 16px; border-radius: 50%;"></span>
+            </div>
+
+            <div>
+                <h3 id="callVendorName" style="font-size: 1.4rem; font-weight: 800; margin: 0;">Ramesh Krishi Kendra</h3>
+                <p id="callVendorTitle" style="font-size: 0.85rem; color: #D1D5DB; margin: 4px 0 0;">Connected · Simulated Video Call</p>
+            </div>
+
+            <!-- Audio Waveform Animation -->
+            <div class="audio-waveform">
+                <span></span><span></span><span></span><span></span><span></span>
+            </div>
+        </div>
+
+        <!-- Floating Call Controls Bar (Matching Reference Screenshot) -->
+        <div class="call-controls-bar">
+            <button class="call-btn" id="btnMuteMic" onclick="toggleMute()" title="Mute Microphone">
+                <i data-lucide="mic"></i>
+            </button>
+            <button class="call-btn" id="btnToggleVideo" onclick="toggleVideo()" title="Toggle Camera">
+                <i data-lucide="video"></i>
+            </button>
+            <button class="call-btn" title="Screen Share" onclick="alert('Simulated screen sharing active.')">
+                <i data-lucide="monitor"></i>
+            </button>
+            <button class="call-btn end-call-btn" onclick="endLiveCall()" title="End Call">
+                <i data-lucide="phone-off"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation Bar (Matching Reference Photo) -->
+    <nav class="bottom-nav">
+        <button class="nav-item" id="mainnav-analytics" onclick="switchMainView('analytics', this)">
+            <i data-lucide="bar-chart-3"></i>
+            <span id="navAnalyticsText">Analytics</span>
+        </button>
+        <button class="nav-item active" id="mainnav-market" onclick="switchMainView('market', this)">
+            <i data-lucide="store"></i>
+            <span id="navMarketText">Market</span>
+        </button>
+        <button class="nav-item" id="mainnav-shop" onclick="switchMainView('shop', this)">
+            <i data-lucide="shopping-bag"></i>
+            <span id="navShopText">Shop</span>
+        </button>
+        <button class="nav-item" id="mainnav-schemes" onclick="switchMainView('schemes', this)">
+            <i data-lucide="landmark"></i>
+            <span id="navSchemesText">Schemes</span>
+        </button>
+    </nav>
+
+    <!-- Persistent Floating Role Switcher Badge (Terracotta) -->
+    <button class="floating-role-badge" id="floatingRoleBadge" onclick="MITTI_ONBOARDING.toggleRole()">
+        <i data-lucide="headphones" style="width:16px;height:16px;"></i> Vendor
+    </button>
+
+    <!-- ==================== ONBOARDING MODALS ==================== -->
+
+    <!-- Welcome Landing Modal (Matching Screenshot 4) -->
+    <div id="welcomeLandingModal" class="onboarding-overlay" style="display: none; background: url('https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=1000&q=80') center/cover no-repeat; color: #FFFFFF;">
+        <div style="position: absolute; inset:0; background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(253,251,247,0.95) 60%, #FDFBF7 100%);"></div>
+        <div style="position: relative; z-index: 2; margin-top: auto; padding-bottom: 20px;">
+            <div style="display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.9); padding: 6px 14px; border-radius: 20px; color: #2C5E3B; font-weight: 700; font-size: 0.9rem; margin-bottom: 16px;">
+                <i data-lucide="sprout" style="width:18px; height:18px;"></i> Mitti
+            </div>
+            <h1 style="font-size: 2.8rem; font-weight: 800; line-height: 1.1; color: #1F2937; margin-bottom: 12px;">
+                THE NEW ERA OF <br><span style="color: #2C5E3B;">FARMING</span>
+            </h1>
+            <p style="font-size: 1rem; color: #4B5563; margin-bottom: 24px; line-height: 1.5;">
+                Soil insights, live mandi rates, trusted fertiliser vendors and government schemes — all in one place, in your language.
+            </p>
+            <button class="btn-green-large" onclick="MITTI_ONBOARDING.startOnboarding()">
+                Get Started →
+            </button>
+        </div>
+    </div>
+
+    <!-- Step 1: Role Selection Modal (Matching Screenshot 5) -->
+    <div id="roleSelectModal" class="onboarding-overlay" style="display: none;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+            <button style="background:none; border:none; cursor:pointer; font-size: 1rem;" onclick="document.getElementById('roleSelectModal').style.display='none'">← Back</button>
+        </div>
+
+        <div class="onboarding-step-tag">STEP 1 OF 2</div>
+        <h2 class="onboarding-title">How will you use <span>Mitti</span>?</h2>
+
+        <div style="margin-top: 20px;">
+            <!-- Option 1: Farmer -->
+            <div class="role-card-select selected" id="role-card-farmer" onclick="MITTI_ONBOARDING.selectRole('farmer')">
+                <div class="role-card-header">
+                    <div class="role-card-icon">
+                        <i data-lucide="sprout" style="width: 24px; height: 24px;"></i>
+                    </div>
+                    <div>
+                        <div class="role-card-title">I'm a Farmer</div>
+                        <div class="role-card-desc">Track soil, buy inputs, apply for schemes</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Option 2: Vendor -->
+            <div class="role-card-select" id="role-card-vendor" onclick="MITTI_ONBOARDING.selectRole('vendor')">
+                <div class="role-card-header">
+                    <div class="role-card-icon" style="background: #FFF4E5; color: #C06C1B;">
+                        <i data-lucide="store" style="width: 24px; height: 24px;"></i>
+                    </div>
+                    <div>
+                        <div class="role-card-title">I'm a Vendor</div>
+                        <div class="role-card-desc">Manage orders, stock and farmer relationships</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn-green-large" style="margin-top: auto;" onclick="MITTI_ONBOARDING.proceedToStep2()">
+            Continue
+        </button>
+    </div>
+
+    <!-- Step 2: Phone Verification Modal (Matching Screenshot 1) -->
+    <div id="phoneVerifyModal" class="onboarding-overlay" style="display: none;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+            <button style="background:none; border:none; cursor:pointer; font-size: 1rem;" onclick="document.getElementById('phoneVerifyModal').style.display='none'; document.getElementById('roleSelectModal').style.display='flex'">← Back</button>
+        </div>
+
+        <div class="onboarding-step-tag">STEP 2 OF 2 · USER ACCOUNT</div>
+        <h2 class="onboarding-title">Verify your <span>number</span></h2>
+        <p class="onboarding-subtitle">We use your mobile number as your Mitti ID.</p>
+
+        <div class="onboard-input-box" style="margin-top: 10px;">
+            <i data-lucide="phone"></i>
+            <input type="text" id="phoneInput" value="+91 98765 43210" placeholder="Mobile Number">
+        </div>
+
+        <button class="btn-green-large" style="margin-top: auto; background: #A3B899;" onclick="MITTI_ONBOARDING.sendOtp()">
+            Send OTP
+        </button>
+    </div>
+
+    <!-- Step 2 Verification Code Modal (Matching Screenshot 2) -->
+    <div id="otpVerifyModal" class="onboarding-overlay" style="display: none;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+            <button style="background:none; border:none; cursor:pointer; font-size: 1rem;" onclick="document.getElementById('otpVerifyModal').style.display='none'; document.getElementById('phoneVerifyModal').style.display='flex'">← Back</button>
+        </div>
+
+        <div class="onboarding-step-tag">STEP 2 OF 2 · USER ACCOUNT</div>
+        <h2 class="onboarding-title">Enter the <span>code</span></h2>
+        <p class="onboarding-subtitle">Demo mode: any 4-6 digit code works — no SMS is sent.</p>
+
+        <div style="margin-top: 10px;">
+            <div class="onboard-input-box">
+                <i data-lucide="key"></i>
+                <input type="text" id="otpCodeInput" value="123456" placeholder="Enter OTP code">
+            </div>
+
+            <div class="onboard-input-box">
+                <i data-lucide="user"></i>
+                <input type="text" id="onboardNameInput" value="Shivangi" placeholder="Your Full Name">
+            </div>
+
+            <div class="onboard-input-box">
+                <i data-lucide="map-pin"></i>
+                <input type="text" id="onboardLocInput" value="Varanasi" placeholder="Your City / District">
+            </div>
+        </div>
+
+        <button class="btn-green-large" style="margin-top: auto;" onclick="MITTI_ONBOARDING.completeOnboarding()">
+            Verify & continue
+        </button>
+    </div>
+
+    <!-- Role Switch Authentication Modal -->
+    <div id="switchLoginModal" class="onboarding-overlay" style="display: none;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+            <button style="background:none; border:none; cursor:pointer; font-size: 1rem;" onclick="document.getElementById('switchLoginModal').style.display='none'">✕ Cancel</button>
+        </div>
+
+        <div class="onboarding-step-tag">SECURITY AUTHENTICATION</div>
+        <h2 class="onboarding-title" id="switchRoleTitle">Login to <span>Vendor Workspace</span></h2>
+        <p class="onboarding-subtitle" id="switchRoleDesc">Verify vendor credentials to proceed into workspace.</p>
+
+        <div style="margin-top: 10px;">
+            <div class="onboard-input-box">
+                <i data-lucide="phone"></i>
+                <input type="text" id="switchPhoneInput" value="+91 98888 77711" placeholder="Mobile Number">
+            </div>
+
+            <div class="onboard-input-box">
+                <i data-lucide="key"></i>
+                <input type="text" id="switchCodeInput" value="123456" placeholder="Enter Security Code / OTP">
+            </div>
+        </div>
+
+        <button class="btn-green-large" style="margin-top: auto;" onclick="MITTI_ONBOARDING.confirmSwitchRole()">
+            Verify & Login
+        </button>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/data.js"></script>
+    <script src="js/state.js"></script>
+    <script src="js/market.js"></script>
+    <script src="js/onboarding.js"></script>
+    <script src="js/farmer.js"></script>
+    <script src="js/vendor.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
+
+
+
