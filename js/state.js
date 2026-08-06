@@ -172,5 +172,10 @@ window.MITTI_STATE = {
     getText(key) {
         const langDict = this.translations[this.language] || this.translations.EN;
         return langDict[key] || this.translations.EN[key] || key;
+    },
+
+    getApiBaseUrl() {
+        const host = window.location.hostname || 'localhost';
+        return `http://${host}:5000`;
     }
 };

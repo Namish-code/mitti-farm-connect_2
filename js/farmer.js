@@ -29,7 +29,8 @@ window.MITTI_FARMER = {
         };
 
         try {
-            const res = await fetch('http://localhost:5000/api/analytics');
+            const baseUrl = window.MITTI_STATE ? window.MITTI_STATE.getApiBaseUrl() : 'http://localhost:5000';
+            const res = await fetch(`${baseUrl}/api/analytics`);
             const json = await res.json();
             if (json.success) analyticsData = json.data;
         } catch (e) {
@@ -161,7 +162,8 @@ window.MITTI_FARMER = {
         ];
 
         try {
-            const res = await fetch(`http://localhost:5000/api/supplies${category !== 'all' ? '?category=' + category : ''}`);
+            const baseUrl = window.MITTI_STATE ? window.MITTI_STATE.getApiBaseUrl() : 'http://localhost:5000';
+            const res = await fetch(`${baseUrl}/api/supplies${category !== 'all' ? '?category=' + category : ''}`);
             const json = await res.json();
             if (json.success && json.data.length > 0) products = json.data;
         } catch (e) {
@@ -232,7 +234,7 @@ window.MITTI_FARMER = {
         if (el) el.innerText = current;
     },
 
-    cartList: [],
+    cartList: JSON.parse(localStorage.getItem('mitti_cart') || '[]'),
 
     async addToCart(productId, title, price) {
         const qty = this.cartItems[productId] || 1;
@@ -244,6 +246,10 @@ window.MITTI_FARMER = {
             this.cartList.push({ id: productId, title, price, qty });
         }
 
+        localStorage.setItem('mitti_cart', JSON.stringify(this.cartList));
+        this.cartItems[productId] = 1;
+        const qtyEl = document.getElementById(`qty-${productId}`);
+        if (qtyEl) qtyEl.innerText = 1;
         if (window.renderCartModalItems) window.renderCartModalItems();
         alert(`Added ${qty} x ${title} to your Cart! Click 'Cart' in top header to view items or checkout.`);
     },
@@ -259,7 +265,8 @@ window.MITTI_FARMER = {
         ];
 
         try {
-            const res = await fetch('http://localhost:5000/api/schemes');
+            const baseUrl = window.MITTI_STATE ? window.MITTI_STATE.getApiBaseUrl() : 'http://localhost:5000';
+            const res = await fetch(`${baseUrl}/api/schemes`);
             const json = await res.json();
             if (json.success && json.data.length > 0) schemes = json.data;
         } catch (e) {

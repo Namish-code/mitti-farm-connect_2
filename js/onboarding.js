@@ -146,7 +146,7 @@ window.MITTI_ONBOARDING = {
         }
     },
 
-    updateBottomNav() {
+    updateBottomNav(activeViewId = 'market') {
         const nav = document.querySelector('.bottom-nav');
         if (!nav) return;
 
@@ -171,19 +171,19 @@ window.MITTI_ONBOARDING = {
             `;
         } else {
             nav.innerHTML = `
-                <button class="nav-item" id="mainnav-analytics" onclick="switchMainView('analytics', this)">
+                <button class="nav-item ${activeViewId === 'analytics' ? 'active' : ''}" id="mainnav-analytics" onclick="switchMainView('analytics', this)">
                     <i data-lucide="bar-chart-3"></i>
                     <span id="navAnalyticsText">Analytics</span>
                 </button>
-                <button class="nav-item active" id="mainnav-market" onclick="switchMainView('market', this)">
+                <button class="nav-item ${activeViewId === 'market' ? 'active' : ''}" id="mainnav-market" onclick="switchMainView('market', this)">
                     <i data-lucide="store"></i>
                     <span id="navMarketText">Market</span>
                 </button>
-                <button class="nav-item" id="mainnav-shop" onclick="switchMainView('shop', this)">
+                <button class="nav-item ${activeViewId === 'shop' ? 'active' : ''}" id="mainnav-shop" onclick="switchMainView('shop', this)">
                     <i data-lucide="shopping-bag"></i>
                     <span id="navShopText">Shop</span>
                 </button>
-                <button class="nav-item" id="mainnav-schemes" onclick="switchMainView('schemes', this)">
+                <button class="nav-item ${activeViewId === 'schemes' ? 'active' : ''}" id="mainnav-schemes" onclick="switchMainView('schemes', this)">
                     <i data-lucide="landmark"></i>
                     <span id="navSchemesText">Schemes</span>
                 </button>

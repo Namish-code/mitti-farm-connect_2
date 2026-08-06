@@ -30,14 +30,6 @@ window.MITTI_VENDOR = {
                 </div>
             </div>
 
-            <!-- Vendor Sub-Tab Navigation Bar -->
-            <div class="market-subtabs" style="margin-bottom: 20px;">
-                <button class="market-subtab ${this.activeSubTab === 'sourcing' ? 'active' : ''}" onclick="MITTI_VENDOR.switchSubTab('sourcing')">🌾 Crop Sourcing</button>
-                <button class="market-subtab ${this.activeSubTab === 'inventory' ? 'active' : ''}" onclick="MITTI_VENDOR.switchSubTab('inventory')">🏪 My Inventory</button>
-                <button class="market-subtab ${this.activeSubTab === 'orders' ? 'active' : ''}" onclick="MITTI_VENDOR.switchSubTab('orders')">📦 Farmer Orders</button>
-                <button class="market-subtab ${this.activeSubTab === 'intelligence' ? 'active' : ''}" onclick="MITTI_VENDOR.switchSubTab('intelligence')">📈 Market Intelligence</button>
-            </div>
-
             <!-- Sub-View Content Container -->
             <div id="vendorSubViewContent"></div>
         `;
@@ -80,7 +72,8 @@ window.MITTI_VENDOR = {
         ];
 
         try {
-            const res = await fetch('http://localhost:5000/api/produce');
+            const baseUrl = window.MITTI_STATE ? window.MITTI_STATE.getApiBaseUrl() : 'http://localhost:5000';
+            const res = await fetch(`${baseUrl}/api/produce`);
             const json = await res.json();
             if (json.success && json.data.length > 0) listings = json.data;
         } catch (e) {
@@ -97,21 +90,23 @@ window.MITTI_VENDOR = {
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 16px;">
-                ${listings.map(item => `
+                ${listings.map(item => {
+                    const priceVal = item.askingPrice || item.expectedPrice || 0;
+                    return `
                     <div style="background: #FFFFFF; border-radius: 20px; padding: 16px; border: 1px solid rgba(0,0,0,0.06); box-shadow: 0 4px 14px rgba(0,0,0,0.03); display: flex; gap: 14px;">
                         <img src="${item.image}" alt="${item.crop}" style="width: 100px; height: 100px; border-radius: 16px; object-fit: cover; flex-shrink: 0;">
                         
                         <div style="flex-grow: 1;">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                                 <h4 style="font-size: 1.1rem; font-weight: 800; color: #1F2937;">${item.crop}</h4>
-                                <span style="font-size: 1.15rem; font-weight: 800; color: #2C5E3B;">₹${item.askingPrice} <span style="font-size: 0.75rem; color: var(--text-muted);">/ ${item.unit}</span></span>
+                                <span style="font-size: 1.15rem; font-weight: 800; color: #2C5E3B;">₹${priceVal} <span style="font-size: 0.75rem; color: var(--text-muted);">/ ${item.unit}</span></span>
                             </div>
 
                             <div style="font-size: 0.85rem; font-weight: 600; color: #374151; margin: 4px 0;">🧑‍🌾 ${item.farmerName} · 📍 ${item.location}</div>
                             <div style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 12px;">Available Quantity: <strong>${item.quantity} ${item.unit}</strong></div>
 
                             <div style="display: flex; gap: 8px;">
-                                <button style="background: #2C5E3B; color: white; border: none; font-weight: 700; font-size: 0.85rem; padding: 8px 14px; border-radius: 18px; cursor: pointer;" onclick="MITTI_VENDOR.makeBuyingOffer('${item.id}', '${item.crop}', ${item.quantity}, '${item.unit}', ${item.askingPrice}, '${item.farmerName}')">
+                                <button style="background: #2C5E3B; color: white; border: none; font-weight: 700; font-size: 0.85rem; padding: 8px 14px; border-radius: 18px; cursor: pointer;" onclick="MITTI_VENDOR.makeBuyingOffer('${item.id}', '${item.crop}', ${item.quantity}, '${item.unit}', ${priceVal}, '${item.farmerName}')">
                                     🤝 Make Buying Offer
                                 </button>
                                 <button style="background: #F3F4F6; color: #374151; border: none; font-weight: 700; font-size: 0.85rem; padding: 8px 14px; border-radius: 18px; cursor: pointer;" onclick="alert('Calling Farmer ${item.farmerName} at ${item.phone || '+91 98765 43210'}...')">
@@ -120,18 +115,23 @@ window.MITTI_VENDOR = {
                             </div>
                         </div>
                     </div>
-                `).join('')}
+                    `;
+                }).join('')}
             </div>
         `;
     },
 
     async makeBuyingOffer(cropId, crop, quantity, unit, askingPrice, farmerName) {
-        const offerVal = prompt(`Send Buying Offer to ${farmerName} for ${crop}\nAsking Price: ₹${askingPrice}/${unit}\nEnter your offer price (₹/${unit}):`, askingPrice);
-        if (!offerVal) return;
-
+        const safeAsking = Number(askingPrice) || 0;
+        const offerVal = prompt(`Send Buying Offer to ${farmerName} for ${crop}\nAsking Price: ₹${safeAsking}/${unit}\nEnter your offer price (₹/${unit}):`, safeAsking || '');
         const offerPrice = Number(offerVal);
+        if (!offerPrice || isNaN(offerPrice) || offerPrice <= 0) {
+            alert("Please enter a valid numeric offer price.");
+            return;
+        }
         try {
-            await fetch('http://localhost:5000/api/offers', {
+            const baseUrl = window.MITTI_STATE ? window.MITTI_STATE.getApiBaseUrl() : 'http://localhost:5000';
+            const res = await fetch(`${baseUrl}/api/offers`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -144,8 +144,11 @@ window.MITTI_VENDOR = {
                     vendorName: "Ramesh Krishi Kendra"
                 })
             });
+            if (!res.ok) throw new Error("Server returned error response");
         } catch (e) {
-            console.log("Offer saved locally");
+            console.error("Offer failed:", e);
+            alert("Failed to send offer: Unable to connect to backend server.");
+            return;
         }
 
         alert(`Buying offer of ₹${offerPrice}/${unit} sent to ${farmerName}! They can view and accept it in their Offers tab.`);
@@ -159,7 +162,8 @@ window.MITTI_VENDOR = {
         ];
 
         try {
-            const res = await fetch('http://localhost:5000/api/supplies');
+            const baseUrl = window.MITTI_STATE ? window.MITTI_STATE.getApiBaseUrl() : 'http://localhost:5000';
+            const res = await fetch(`${baseUrl}/api/supplies`);
             const json = await res.json();
             if (json.success && json.data.length > 0) products = json.data;
         } catch (e) {
@@ -229,13 +233,17 @@ window.MITTI_VENDOR = {
         if (!newPrice || isNaN(newPrice)) return;
 
         try {
-            await fetch(`http://localhost:5000/api/supplies/${id}`, {
+            const baseUrl = window.MITTI_STATE ? window.MITTI_STATE.getApiBaseUrl() : 'http://localhost:5000';
+            const res = await fetch(`${baseUrl}/api/supplies/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ price: Number(newPrice) })
             });
+            if (!res.ok) throw new Error("Server returned error response");
         } catch (e) {
-            console.log("Price updated locally");
+            console.error("Price update failed:", e);
+            alert("Failed to update price: Unable to connect to backend server.");
+            return;
         }
 
         alert("Product price updated successfully!");
@@ -245,7 +253,8 @@ window.MITTI_VENDOR = {
     async toggleStockStatus(id, currentStatus) {
         const newStatus = currentStatus === 'In stock' ? 'Out of stock' : 'In stock';
         try {
-            await fetch(`http://localhost:5000/api/supplies/${id}`, {
+            const baseUrl = window.MITTI_STATE ? window.MITTI_STATE.getApiBaseUrl() : 'http://localhost:5000';
+            await fetch(`${baseUrl}/api/supplies/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ stockStatus: newStatus })
@@ -261,11 +270,15 @@ window.MITTI_VENDOR = {
         if (!confirm("Are you sure you want to delete this product from your Krishi Shop?")) return;
 
         try {
-            await fetch(`http://localhost:5000/api/supplies/${id}`, {
+            const baseUrl = window.MITTI_STATE ? window.MITTI_STATE.getApiBaseUrl() : 'http://localhost:5000';
+            const res = await fetch(`${baseUrl}/api/supplies/${id}`, {
                 method: 'DELETE'
             });
+            if (!res.ok) throw new Error("Server returned error response");
         } catch (e) {
-            console.log("Product deleted locally");
+            console.error("Product deletion failed:", e);
+            alert("Failed to delete product: Unable to connect to backend server.");
+            return;
         }
 
         alert("Product deleted!");
@@ -280,7 +293,8 @@ window.MITTI_VENDOR = {
         const packSize = document.getElementById('vPackSize').value;
 
         try {
-            await fetch('http://localhost:5000/api/supplies', {
+            const baseUrl = window.MITTI_STATE ? window.MITTI_STATE.getApiBaseUrl() : 'http://localhost:5000';
+            const res = await fetch(`${baseUrl}/api/supplies`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -293,8 +307,11 @@ window.MITTI_VENDOR = {
                     stockStatus: "In stock"
                 })
             });
+            if (!res.ok) throw new Error("Server returned error response");
         } catch (e) {
-            console.log("Product saved locally");
+            console.error("Product creation failed:", e);
+            alert("Failed to add product: Unable to connect to backend server.");
+            return;
         }
 
         alert(`Successfully added ${title} to Krishi Shop!`);
@@ -309,8 +326,8 @@ window.MITTI_VENDOR = {
         ];
 
         try {
-            const host = window.location.hostname || 'localhost';
-            const res = await fetch(`http://${host}:5000/api/orders`);
+            const baseUrl = window.MITTI_STATE ? window.MITTI_STATE.getApiBaseUrl() : 'http://localhost:5000';
+            const res = await fetch(`${baseUrl}/api/orders`);
             const json = await res.json();
             if (json.success && json.data.length > 0) orders = json.data;
         } catch (e) {
@@ -364,7 +381,8 @@ window.MITTI_VENDOR = {
 
     async fulfillOrder(orderId) {
         try {
-            await fetch(`http://localhost:5000/api/orders/${orderId}`, {
+            const baseUrl = window.MITTI_STATE ? window.MITTI_STATE.getApiBaseUrl() : 'http://localhost:5000';
+            await fetch(`${baseUrl}/api/orders/${orderId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'Fulfilled' })

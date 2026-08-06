@@ -19,7 +19,7 @@ function switchMainView(viewId, btn) {
     if(btn) btn.classList.add('active');
 
     if (window.MITTI_ONBOARDING && window.MITTI_ONBOARDING.updateBottomNav) {
-        window.MITTI_ONBOARDING.updateBottomNav();
+        window.MITTI_ONBOARDING.updateBottomNav(viewId);
     }
 
     if(viewId === 'market' && window.MITTI_MARKET) {
@@ -226,7 +226,8 @@ async function checkoutCart() {
     items.forEach(i => total += i.price * i.qty);
 
     try {
-        await fetch('http://localhost:5000/api/orders/checkout', {
+        const baseUrl = window.MITTI_STATE ? window.MITTI_STATE.getApiBaseUrl() : 'http://localhost:5000';
+        const res = await fetch(`${baseUrl}/api/orders/checkout`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -238,12 +239,16 @@ async function checkoutCart() {
                 vendor: "Ramesh Krishi Kendra"
             })
         });
+        if (!res.ok) throw new Error("Server returned error response");
     } catch (e) {
-        console.log("Order saved locally");
+        console.error("Order failed:", e);
+        alert("Failed to place order: Unable to connect to backend server. Please ensure backend server is running.");
+        return;
     }
 
     alert(`Order placed successfully! Total ₹${total}. Sent to Ramesh Krishi Kendra for fulfillment.`);
     window.MITTI_FARMER.cartList = [];
+    localStorage.setItem('mitti_cart', '[]');
     renderCartModalItems();
     closeCartModal();
 }
@@ -377,7 +382,10 @@ function sendVendorChatMessage() {
     if (!msg) return;
 
     const list = document.getElementById('chatMessagesList');
-    list.innerHTML += `<div class="chat-bubble user">${msg}</div>`;
+    const userBubble = document.createElement('div');
+    userBubble.className = 'chat-bubble user';
+    userBubble.textContent = msg;
+    list.appendChild(userBubble);
     input.value = '';
     list.scrollTop = list.scrollHeight;
 

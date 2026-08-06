@@ -418,7 +418,7 @@ window.MITTI_MARKET = {
         let mspUnit = msp ? Math.round(msp * unitMultiplier) : suggestedPrice;
         let fastSellPrice = Math.round(suggestedPrice * 0.95);
 
-        if (priceInput && (!priceInput.value || priceInput.value == 0)) {
+        if (priceInput) {
             priceInput.value = fastSellPrice;
         }
 
@@ -518,8 +518,8 @@ window.MITTI_MARKET = {
 
         // 1. Post to Express Backend API
         try {
-            const host = window.location.hostname || 'localhost';
-            await fetch(`http://${host}:5000/api/produce`, {
+            const baseUrl = window.MITTI_STATE ? window.MITTI_STATE.getApiBaseUrl() : 'http://localhost:5000';
+            await fetch(`${baseUrl}/api/produce`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newListing)
@@ -632,7 +632,8 @@ window.MITTI_MARKET = {
         let offers = window.MITTI_STATE.offers;
 
         try {
-            const res = await fetch('http://localhost:5000/api/offers');
+            const baseUrl = window.MITTI_STATE ? window.MITTI_STATE.getApiBaseUrl() : 'http://localhost:5000';
+            const res = await fetch(`${baseUrl}/api/offers`);
             const json = await res.json();
             if (json.success && json.data.length > 0) {
                 offers = json.data;
@@ -677,7 +678,8 @@ window.MITTI_MARKET = {
 
     async acceptOffer(offerId, vendorName, crop, quantity, price) {
         try {
-            await fetch(`http://localhost:5000/api/offers/${offerId}`, {
+            const baseUrl = window.MITTI_STATE ? window.MITTI_STATE.getApiBaseUrl() : 'http://localhost:5000';
+            await fetch(`${baseUrl}/api/offers/${offerId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'Accepted' })
@@ -709,7 +711,8 @@ window.MITTI_MARKET = {
 
     async rejectOffer(offerId) {
         try {
-            await fetch(`http://localhost:5000/api/offers/${offerId}`, {
+            const baseUrl = window.MITTI_STATE ? window.MITTI_STATE.getApiBaseUrl() : 'http://localhost:5000';
+            await fetch(`${baseUrl}/api/offers/${offerId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ status: 'Declined' })
@@ -744,7 +747,8 @@ window.MITTI_MARKET = {
         const offer = window.MITTI_STATE.offers.find(o => o.id === offerId);
         if(offer) {
             offer.offeredPrice = newPrice;
-            offer.totalAmount = newPrice * 50; // simple calculation
+            const qty = parseFloat(offer.quantity) || 1;
+            offer.totalAmount = newPrice * qty;
             window.MITTI_STATE.saveOffers();
             this.renderOffers();
             this.closeCounterModal();
